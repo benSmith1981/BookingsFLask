@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Your Bookings</h1>
+
+{% if bookings %}
+    <ul>
+    {% for b in bookings %}
+        <li>{{ b[0] }}</li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No bookings yet.</p>
+{% endif %}
+{% endblock %}
