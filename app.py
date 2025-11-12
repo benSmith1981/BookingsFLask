@@ -1,11 +1,13 @@
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, jsonify
 import sqlite3
 from database import init_db
-
+import firebase_admin
+from firebase_admin import credentials, auth
 app = Flask(__name__)
 app.secret_key = "SECRET123"   # Change this in production
 
-
+cred = credentials.Certificate("serviceAccountKey.json")
+firebase_admin.initialize_app(cred)
 # Helper: get database connection
 def get_db():
     return sqlite3.connect("booking.db", check_same_thread=False)
@@ -29,23 +31,31 @@ def register():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
-        db = get_db()
-        c = db.cursor()
-        c.execute("SELECT id FROM users WHERE username=? AND password=?", (username, password))
-        user = c.fetchone()
-        if user:
-            session["user_id"] = user[0]
-            session["username"] = username
-            return redirect("/")
-        else:
-            return "Invalid login"
+        id_token = request.headers.get("Authorization")
+
+        if not id_token:
+            return jsonify({"error": "Missing Authorization header"}), 401
+
+        if id_token.startswith("Bearer "):
+            id_token = id_token.split("Bearer ")[1]
+
+        try:
+            decoded_token = auth.verify_id_token(id_token)
+            uid = decoded_token["uid"]
+            email = decoded_token.get("email")
+
+            session["user_id"] = uid
+            session["email"] = email
+
+            return jsonify({"message": f"Welcome {email}"})
+        except Exception as e:
+            return jsonify({"error": str(e)}), 401
+
     return render_template("login.html")
+
 def init_db():
     conn = sqlite3.connect("booking.db")
     c = conn.cursor()
-    # Create users table
     c.execute("""
         CREATE TABLE IF NOT EXISTS users(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -53,7 +63,6 @@ def init_db():
             password TEXT NOT NULL
         )
     """)
-    # Create bookings table
     c.execute("""
         CREATE TABLE IF NOT EXISTS bookings(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -77,17 +86,19 @@ def my_bookings():
 
 @app.route("/", methods=["GET", "POST"])
 def booking():
-    # must be logged in
     if "user_id" not in session:
         return redirect("/login")
+
     if request.method == "POST":
-        selected_date = request.form.get("date")
+        selected_date = request.form["date"]
         db = get_db()
         c = db.cursor()
         c.execute("INSERT INTO bookings (user_id, date) VALUES (?, ?)", (session["user_id"], selected_date))
         db.commit()
         return render_template("confirm.html", date=selected_date)
+
     return render_template("booking.html")
+
 
 @app.route("/logout")
 def logout():

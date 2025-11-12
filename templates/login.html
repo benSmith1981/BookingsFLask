@@ -1,10 +1,45 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>Login</h1>
-
-<form method="POST">
-    Username: <input type="text" name="username"><br><br>
-    Password: <input type="password" name="password"><br><br>
-    <button type="submit">Login</button>
+<form onsubmit="event.preventDefault(); loginUser();">
+  <input type="email" id="email" placeholder="Email" required><br>
+  <input type="password" id="password" placeholder="Password" required><br>
+  <button type="submit">Login</button>
 </form>
+
+<p>Don’t have an account? <a href="/register">Register here</a></p>
+
+<script>
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+    apiKey: "AIzaSyDNkitkRMaU-C3aWZfluCjRJDHnnJzOAsg",
+    authDomain: "studio-6928885481-61130.firebaseapp.com",
+    projectId: "studio-6928885481-61130",
+    storageBucket: "studio-6928885481-61130.firebasestorage.app",
+    messagingSenderId: "134053200121",
+    appId: "1:134053200121:web:c043e9541ff199cc7a6228"
+    };
+  firebase.initializeApp(firebaseConfig);
+
+  async function loginUser() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    try {
+      const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+      const idToken = await userCredential.user.getIdToken();
+
+      const res = await fetch("/login", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + idToken }
+      });
+
+      const data = await res.json();
+      alert(data.message || data.error);
+      if (data.message) window.location = "/";
+    } catch (error) {
+      alert(error.message);
+    }
+  }
+</script>
 {% endblock %}

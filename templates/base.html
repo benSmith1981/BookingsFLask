@@ -2,6 +2,9 @@
 <html>
 <head>
     <title>{{ title if title else "Zoo Booking System" }}</title>
+<!-- Firebase compat (works with non-modular JS) -->
+<script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -42,6 +45,7 @@
             padding: 30px;
         }
     </style>
+
 </head>
 
 <body>

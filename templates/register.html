@@ -1,10 +1,38 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Create Account</h1>
-
-<form method="POST">
-    Username: <input type="text" name="username" required><br><br>
-    Password: <input type="password" name="password" required><br><br>
+<body>
+  <h1>Register</h1>
+  <form onsubmit="event.preventDefault(); registerUser();">
+    <input type="email" id="email" placeholder="Email" required><br>
+    <input type="password" id="password" placeholder="Password" required><br>
     <button type="submit">Register</button>
-</form>
+  </form>
+
+  <p>Already have an account? <a href="/login">Login here</a></p>
+
+  <script>
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+    apiKey: "AIzaSyDNkitkRMaU-C3aWZfluCjRJDHnnJzOAsg",
+    authDomain: "studio-6928885481-61130.firebaseapp.com",
+    projectId: "studio-6928885481-61130",
+    storageBucket: "studio-6928885481-61130.firebasestorage.app",
+    messagingSenderId: "134053200121",
+    appId: "1:134053200121:web:c043e9541ff199cc7a6228"
+    };
+    firebase.initializeApp(firebaseConfig);
+
+    async function registerUser() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      try {
+        await firebase.auth().createUserWithEmailAndPassword(email, password);
+        alert("Account created! You can now log in.");
+        window.location = "/login";
+      } catch (error) {
+        alert(error.message);
+      }
+    }
+  </script>
 {% endblock %}

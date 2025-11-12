@@ -1,24 +1,32 @@
 import sqlite3
+import firebase_admin
+from firebase_admin import credentials, auth
+
+
+
 def init_db():
     conn = sqlite3.connect("booking.db")
     c = conn.cursor()
-    # Create users table
+
+    # --- USERS TABLE ---
     c.execute("""
-        CREATE TABLE IF NOT EXISTS users(
+        CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL
-        )
+        );
     """)
-    # Create bookings table
+
+    # --- BOOKINGS TABLE ---
     c.execute("""
-        CREATE TABLE IF NOT EXISTS bookings(
+        CREATE TABLE IF NOT EXISTS bookings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER,
-            date TEXT,
+            user_id INTEGER NOT NULL,
+            date TEXT NOT NULL,
             FOREIGN KEY (user_id) REFERENCES users(id)
-        )
+        );
     """)
+
     conn.commit()
     conn.close()
 if __name__ == "__main__":
