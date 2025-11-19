@@ -14,8 +14,14 @@ def init_db():
     c.execute("""
         CREATE TABLE IF NOT EXISTS bookings(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+<<<<<<< Updated upstream
             user_id INTEGER,
             date TEXT,
+=======
+            user_id INTEGER NOT NULL,
+            people INTEGER,
+            date TEXT NOT NULL,
+>>>>>>> Stashed changes
             FOREIGN KEY (user_id) REFERENCES users(id)
         )
     """)

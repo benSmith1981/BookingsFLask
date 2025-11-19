@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Booking Confirmed</h1>
+<h1>Booking Confirmed! 🎉</h1>
 
-<p><strong>Selected Date:</strong> {{ date }}</p>
-<p>Your booking has been saved to your account.</p>
+<p>Your visit is booked for: <strong>{{ date }}</strong></p>
+<p>Number of people: <strong>{{ people }}</strong></p>
 
-<a href="/my-bookings">View your bookings</a>
+<a href="/my-bookings">View My Bookings</a>
 {% endblock %}
