@@ -82,9 +82,6 @@ def booking():
     if "user_id" not in session:
         return redirect("/login")
     if request.method == "POST":
-<<<<<<< Updated upstream
-        selected_date = request.form.get("date")
-=======
         selected_date = request.form["date"]
         people = int(request.form["people"])
 
@@ -92,7 +89,6 @@ def booking():
         if people < 1 or people > 10:
             return "Guest number must be between 1 and 10"
 
->>>>>>> Stashed changes
         db = get_db()
         c = db.cursor()
         c.execute("""
@@ -100,13 +96,9 @@ def booking():
             VALUES (?, ?, ?)
         """, (session["user_id"], selected_date, people))
         db.commit()
-<<<<<<< Updated upstream
-        return render_template("confirm.html", date=selected_date)
-=======
 
         return render_template("confirm.html", date=selected_date, people=people)
 
->>>>>>> Stashed changes
     return render_template("booking.html")
 
 @app.route("/logout")
