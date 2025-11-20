@@ -3,13 +3,33 @@
 <h1>Book Your Visit</h1>
 
 <form method="POST">
-    <label for="date">Choose a date:</label><br><br>
-    <input type="date" name="date" required><br><br>
+    <div class="booking-container">
+        <div >
+            <h2>Choose a ticket type</h2>
+    
+            <label>Adults £30</label>
+            <input type="number" name="adults" min="1" max="10" value="1">
+            <br><br>
+            <label>Children £20</label>
+            <input type="number" name="children" min="0" max="10" value="1">
+            <br><br>
+            <label>Students £20</label>
+            <input type="number" name="students" min="0" max="10" value="0">
+        </div>
+        <div>
+            <h2>Choose a date</h2>
+            <div class="calendar-box">
+                <input type="date" id="date" name="date" required>
+            </div>
+        </div>
+    
 
-    <label for="people">Number of people:</label><br><br>
-    <input type="number" name="people" min="1" max="10" required><br><br>
-
-    <button type="submit">Continue</button>
+    
+    </div>
+    
+    <div class="btn-container">
+        <button class="purchase-btn">Purchase Ticket</button>
+    </div>
 </form>
 
 {% endblock %}

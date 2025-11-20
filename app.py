@@ -10,6 +10,10 @@ app.secret_key = "SECRET123"   # Change this in production
 def get_db():
     return sqlite3.connect("booking.db", check_same_thread=False)
 
+@app.route("/")
+def home():
+    return render_template("home.html")
+
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
@@ -45,24 +49,40 @@ def login():
 def init_db():
     conn = sqlite3.connect("booking.db")
     c = conn.cursor()
-    # Create users table
+    # Users table
     c.execute("""
-        CREATE TABLE IF NOT EXISTS users(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL
-        )
+    CREATE TABLE IF NOT EXISTS users(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL
+    )
     """)
-    # Create bookings table
+
+    # Ticket types table
     c.execute("""
-        CREATE TABLE IF NOT EXISTS bookings(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER,
-            people INTEGER,
-            date TEXT,
-            FOREIGN KEY (user_id) REFERENCES users(id)
-        )
+    CREATE TABLE IF NOT EXISTS ticket_types(
+        ticket_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        type TEXT NOT NULL,
+        cost INTEGER NOT NULL
+    )
     """)
+
+    # Bookings table
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS bookings(
+        booking_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        ticket_id INTEGER NOT NULL,
+        people INTEGER NOT NULL,
+        date TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (ticket_id) REFERENCES ticket_types(ticket_id)
+    )
+    """)
+    c.execute("INSERT INTO ticket_types (type, cost) VALUES ('Adult', 30)")
+    c.execute("INSERT INTO ticket_types (type, cost) VALUES ('Child', 20)")
+    c.execute("INSERT INTO ticket_types (type, cost) VALUES ('Student', 20)")
+
     conn.commit()
     conn.close()
 
@@ -76,28 +96,47 @@ def my_bookings():
     rows = c.fetchall()
     return render_template("bookings.html", bookings=rows)
 
-@app.route("/", methods=["GET", "POST"])
+@app.route("/booking", methods=["GET", "POST"])
 def booking():
     # must be logged in
     if "user_id" not in session:
         return redirect("/login")
+
     if request.method == "POST":
         selected_date = request.form["date"]
-        people = int(request.form["people"])
-
-        # Validation
-        if people < 1 or people > 10:
-            return "Guest number must be between 1 and 10"
+        adults = int(request.form["adults"])
+        children = int(request.form["children"])
+        students = int(request.form["students"])
 
         db = get_db()
         c = db.cursor()
-        c.execute("""
-            INSERT INTO bookings (user_id, date, people)
-            VALUES (?, ?, ?)
-        """, (session["user_id"], selected_date, people))
+
+        # Insert each ticket type separately if > 0
+        if adults > 0:
+            c.execute("""
+                INSERT INTO bookings (user_id, ticket_id, people, date)
+                VALUES (?, ?, ?, ?)
+            """, (session["user_id"], 1, adults, selected_date))  # 1 = Adults
+
+        if children > 0:
+            c.execute("""
+                INSERT INTO bookings (user_id, ticket_id, people, date)
+                VALUES (?, ?, ?, ?)
+            """, (session["user_id"], 2, children, selected_date))  # 2 = Children
+
+        if students > 0:
+            c.execute("""
+                INSERT INTO bookings (user_id, ticket_id, people, date)
+                VALUES (?, ?, ?, ?)
+            """, (session["user_id"], 3, students, selected_date))  # 3 = Students
+
         db.commit()
 
-        return render_template("confirm.html", date=selected_date, people=people)
+        total_people = adults + children + students
+
+        return render_template("confirm.html", 
+                               date=selected_date, 
+                               people=total_people)
 
     return render_template("booking.html")
 
