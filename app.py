@@ -115,10 +115,12 @@ def booking():
                         SELECT cost FROM ticket_types WHERE ticket_id = 1
                               """).fetchone()[0]
         totalAdultCost = 0
+
         childCost = c.execute("""
                         SELECT cost FROM ticket_types WHERE ticket_id = 2
                               """).fetchone()[0]
         totalChildCost = 0
+
         studentCost = c.execute("""
                         SELECT cost FROM ticket_types WHERE ticket_id = 3
                               """).fetchone()[0]
@@ -154,15 +156,19 @@ def booking():
         return render_template("confirm.html", 
                                date=selected_date, 
                                people=total_people,
+                               
                                adults=adults,
                                adultCost= adultCost,
                                totalAdultCost=totalAdultCost,
+
                                children=children,
                                childCost=childCost,
                                totalChildCost = totalChildCost,
+
                                students=students,
                                studentCost=studentCost,
                                totalStudentCost = totalStudentCost,
+
                                totalCost=totalCost)
 
     return render_template("booking.html")
