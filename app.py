@@ -111,20 +111,37 @@ def booking():
         db = get_db()
         c = db.cursor()
 
+        adultCost = c.execute("""
+                        SELECT cost FROM ticket_types WHERE ticket_id = 1
+                              """).fetchone()[0]
+        totalAdultCost = 0
+        childCost = c.execute("""
+                        SELECT cost FROM ticket_types WHERE ticket_id = 2
+                              """).fetchone()[0]
+        totalChildCost = 0
+        studentCost = c.execute("""
+                        SELECT cost FROM ticket_types WHERE ticket_id = 3
+                              """).fetchone()[0]
+        totalStudentCost = 0
         # Insert each ticket type separately if > 0
         if adults > 0:
+            totalAdultCost = adults * adultCost
             c.execute("""
                 INSERT INTO bookings (user_id, ticket_id, people, date)
                 VALUES (?, ?, ?, ?)
             """, (session["user_id"], 1, adults, selected_date))  # 1 = Adults
 
         if children > 0:
+            totalChildCost = children * childCost
+
             c.execute("""
                 INSERT INTO bookings (user_id, ticket_id, people, date)
                 VALUES (?, ?, ?, ?)
             """, (session["user_id"], 2, children, selected_date))  # 2 = Children
 
         if students > 0:
+            totalStudentCost = students * studentCost
+
             c.execute("""
                 INSERT INTO bookings (user_id, ticket_id, people, date)
                 VALUES (?, ?, ?, ?)
@@ -133,10 +150,20 @@ def booking():
         db.commit()
 
         total_people = adults + children + students
-
+        totalCost = totalStudentCost + totalChildCost + totalAdultCost
         return render_template("confirm.html", 
                                date=selected_date, 
-                               people=total_people)
+                               people=total_people,
+                               adults=adults,
+                               adultCost= adultCost,
+                               totalAdultCost=totalAdultCost,
+                               children=children,
+                               childCost=childCost,
+                               totalChildCost = totalChildCost,
+                               students=students,
+                               studentCost=studentCost,
+                               totalStudentCost = totalStudentCost,
+                               totalCost=totalCost)
 
     return render_template("booking.html")
 

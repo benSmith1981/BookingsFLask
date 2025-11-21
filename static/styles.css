@@ -50,7 +50,7 @@ body {
 
 .booking-container {
     display: grid;
-    grid-template-columns: 1fr 1fr ;
+    grid-template-columns: 1fr 1fr;
     gap: 50px;
     max-width: 900px;
     margin: 40px auto;
