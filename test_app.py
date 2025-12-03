@@ -1,7 +1,7 @@
 import unittest
 import os
 import sqlite3
-from app import app, init_db
+from app import app, init_db, get_db
 class FlaskAppTestCase(unittest.TestCase):
    
     def setUp(self):
@@ -11,6 +11,8 @@ class FlaskAppTestCase(unittest.TestCase):
         app.config["TESTING"] = True
         app.config["SECRET_KEY"] = "test"
         app.config["DATABASE"] = "test.db"
+        conn = get_db()
+        conn.close()
         # 2. Delete old DB BEFORE anything opens it
         if os.path.exists("test.db"):
             os.remove("test.db")
@@ -32,7 +34,7 @@ class FlaskAppTestCase(unittest.TestCase):
 
     def test_user_saved_in_database(self):
         self.client.post("/register", data={"username": "Bob", "password": "123456"}, follow_redirects=True)
-        conn = sqlite3.connect("test.db")
+        conn = get_db()
         c = conn.cursor()
         c.execute("SELECT username FROM users WHERE username = 'Bob'")
         result = c.fetchone()

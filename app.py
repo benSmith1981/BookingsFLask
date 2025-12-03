@@ -1,65 +1,52 @@
-from flask import Flask, render_template, request, redirect, session, g
+from flask import Flask, render_template, request, redirect, session
 import sqlite3
 
 app = Flask(__name__)
-app.secret_key = "SECRET123"
+app.secret_key = "SECRET123"   # Change this in production
 
-# ---------------------------------------------
-# DATABASE CONNECTION
-# ---------------------------------------------
+
+# Helper: get database connection
 def get_db():
-    if "db" not in g:
-        db_path = app.config.get("DATABASE", "zoo_database.db")
-        g.db = sqlite3.connect(db_path)
-        g.db.row_factory = sqlite3.Row
-    return g.db
+    # Make sure we get the DB name by checking the config for a DATABASE or assigning it a default one
+    db = app.config.get("DATABASE", "zoo_database.db") 
+    return sqlite3.connect(db, check_same_thread=False)
 
-@app.teardown_appcontext
-def close_db(exception):
-    db = g.pop("db", None)
-    if db is not None:
-        db.close()
-
-# ---------------------------------------------
-# INITIALISE DATABASE
-# ---------------------------------------------
 def init_db():
-    db = sqlite3.connect(app.config.get("DATABASE", "zoo_database.db"))
-    db.row_factory = sqlite3.Row
-    c = db.cursor()
-
-    # Users
+    conn = get_db()
+    c = conn.cursor()
+    # Users table
     c.execute("""
     CREATE TABLE IF NOT EXISTS users(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL
-    );
+    )
     """)
 
-    # Ticket Types
+    # Ticket types table
     c.execute("""
     CREATE TABLE IF NOT EXISTS ticket_types(
         ticket_id INTEGER PRIMARY KEY AUTOINCREMENT,
         type TEXT NOT NULL,
         cost INTEGER NOT NULL
-    );
+    )
     """)
 
-    # Bookings
+    # Bookings table
     c.execute("""
     CREATE TABLE IF NOT EXISTS bookings(
         booking_id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
         ticket_id INTEGER NOT NULL,
         people INTEGER NOT NULL,
-        date TEXT NOT NULL
-    );
+        date TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (ticket_id) REFERENCES ticket_types(ticket_id)
+    )
     """)
 
-    # Education
     c.execute("""
-    CREATE TABLE IF NOT EXISTS education(
+        CREATE TABLE IF NOT EXISTS education (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
         summary TEXT,
@@ -67,22 +54,68 @@ def init_db():
         content TEXT
     );
     """)
+    c.execute("INSERT INTO ticket_types (type, cost) VALUES ('Adult', 30)")
+    c.execute("INSERT INTO ticket_types (type, cost) VALUES ('Child', 20)")
+    c.execute("INSERT INTO ticket_types (type, cost) VALUES ('Student', 20)")
 
-    # Insert ticket types ONCE
-    if c.execute("SELECT COUNT(*) FROM ticket_types").fetchone()[0] == 0:
-        c.execute("INSERT INTO ticket_types (type, cost) VALUES ('Adult', 30)")
-        c.execute("INSERT INTO ticket_types (type, cost) VALUES ('Child', 20)")
-        c.execute("INSERT INTO ticket_types (type, cost) VALUES ('Student', 20)")
+    # Insert dummy educational articles ONCE
+    existing = c.execute("SELECT COUNT(*) FROM education").fetchone()[0]
 
-    # Insert education articles ONCE
-    if c.execute("SELECT COUNT(*) FROM education").fetchone()[0] == 0:
+    if existing == 0:
         c.execute("""
-        INSERT INTO education (title, summary, image, content)
-        VALUES ('Amazing Tigers', 'Summary...', '', 'Content...')
-        """)
+            INSERT INTO education (title, summary, image, content)
+            VALUES (?, ?, ?, ?)
+        """, (
+            "Amazing Tigers",
+            "Find out fascinating facts about tigers, their habitats, and how they hunt.",
+            "https://tse4.mm.bing.net/th/id/OIP.cdqbyBTd4Ud1-q5dQI13hgHaE8?pid=Apis",
+            "Tigers are the largest cat species in the world. They live in Asia and are known for their strength, stealth, and striking orange-and-black striped fur..."
+        ))
 
-    db.commit()
-    db.close()
+        c.execute("""
+            INSERT INTO education (title, summary, image, content)
+            VALUES (?, ?, ?, ?)
+        """, (
+            "Incredible Lions",
+            "Learn why lions are known as the kings of the jungle.",
+            "https://cdn.mos.cms.futurecdn.net/FVqUjfbiHS9imyJiRiM53-970-80.jpg",
+            "Lions are social animals that live in prides. They are powerful hunters and one of Africa’s most iconic species..."
+        ))
+
+        c.execute("""
+            INSERT INTO education (title, summary, image, content)
+            VALUES (?, ?, ?, ?)
+        """, (
+            "The World of Elephants",
+            "Discover the largest land mammals on Earth.",
+            "https://tse2.mm.bing.net/th/id/OIP.ELuQSsbszrUeguQbDScoKAHaJ4?pid=Api",
+            "Elephants are gentle giants known for their intelligence, memory, and complex family structures..."
+        ))
+
+        c.execute("""
+            INSERT INTO education (title, summary, image, content)
+            VALUES (?, ?, ?, ?)
+        """, (
+            "Giraffes and Their Long Necks",
+            "Why do giraffes have long necks? Find out here!",
+            "https://tse2.mm.bing.net/th/id/OIP.6dLjDPlPCzhPjG8kK96qZQHaKT?pid=Api",
+            "Giraffes use their long necks to browse tall trees and compete for food and mates..."
+        ))
+
+        c.execute("""
+            INSERT INTO education (title, summary, image, content)
+            VALUES (?, ?, ?, ?)
+        """, (
+            "Penguins of the Antarctic",
+            "Explore how penguins survive freezing temperatures.",
+            "https://tse3.mm.bing.net/th/id/OIP.t1p8TBohAPgQjzfvfwAsLgHaFj?pid=Api",
+            "Penguins are flightless birds adapted for life in the water. Their thick layers of fat and feathers help them endure the icy Antarctic climate..."
+        ))
+
+    print("Inserted dummy educational articles!")
+
+    conn.commit()
+    conn.close()
 
 @app.route("/")
 def home():
@@ -99,6 +132,7 @@ def register():
         try:
             c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
             db.commit()
+            db.close() 
         except:
             return "User already exists"
         return redirect("/login")
@@ -113,6 +147,7 @@ def login():
         c = db.cursor()
         c.execute("SELECT id FROM users WHERE username=? AND password=?", (username, password))
         user = c.fetchone()
+        db.close() 
         if user:
             session["user_id"] = user[0]
             session["username"] = username
@@ -130,6 +165,7 @@ def my_bookings():
     c = db.cursor()
     c.execute("SELECT date FROM bookings WHERE user_id=?", (session["user_id"],))
     rows = c.fetchall()
+    db.close() 
     return render_template("bookings.html", bookings=rows)
 
 @app.route("/booking", methods=["GET", "POST"])
@@ -186,7 +222,7 @@ def booking():
             """, (session["user_id"], 3, students, selected_date))  # 3 = Students
 
         db.commit()
-
+        db.close() 
         total_people = adults + children + students
         totalCost = totalStudentCost + totalChildCost + totalAdultCost
         return render_template("confirm.html", 
@@ -220,7 +256,7 @@ def education():
     articles = c.execute("""
         SELECT * FROM education
     """).fetchall()
-
+    db.close() 
     return render_template("education.html", articles=articles)
 
 
@@ -238,7 +274,7 @@ def article_detail(article_id):
 
     if article is None:
         return "Article not found", 404
-
+    db.close() 
     return render_template("article_detail.html", article=article)
 
 @app.route("/logout")
