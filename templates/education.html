@@ -1,12 +1,13 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="container mt-4">
 
+<div class="container mt-4">
+    <h1>Read about the Zoo Animals</h1>
     <!-- Top 2 large articles -->
     <div class="row">
         {% for article in articles[:2] %}
-        <div class="col-md-6 mb-4">
+        <div class="col-md-6 mb-1">
             <a href="/article/{{ article['id'] }}" style="text-decoration:none; color:inherit;">
                 <div class="card p-3">
                     <img src="{{ article['image'] or 'https://via.placeholder.com/600x350' }}" class="card-img-top mb-3">
@@ -21,7 +22,7 @@
     <!-- Bottom 3 smaller articles -->
     <div class="row">
         {% for article in articles[2:] %}
-        <div class="col-md-4 mb-4">
+        <div class="col-md-4 mb-1">
             <a href="/article/{{ article['id'] }}" style="text-decoration:none; color:inherit;">
                 <div class="card p-3">
                     <img src="{{ article['image'] or 'https://via.placeholder.com/400x250' }}" class="card-img-top mb-3">
