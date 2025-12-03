@@ -11,8 +11,7 @@ class FlaskAppTestCase(unittest.TestCase):
         app.config["TESTING"] = True
         app.config["SECRET_KEY"] = "test"
         app.config["DATABASE"] = "test.db"
-        conn = get_db()
-        conn.close()
+
         # 2. Delete old DB BEFORE anything opens it
         if os.path.exists("test.db"):
             os.remove("test.db")
