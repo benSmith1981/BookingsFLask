@@ -126,6 +126,8 @@ def register():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
+        if len(username) > 50:
+            return render_template("register.html",message="Your username is too long keep to 50 characters")
         db = get_db()
         c = db.cursor()
         # Insert new user

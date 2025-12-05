@@ -41,6 +41,27 @@ class FlaskAppTestCase(unittest.TestCase):
         conn.close()
         self.assertIsNotNone(result)
 
+    def test_long_username_and_password_isnot_saved_in_database(self):
+        self.client.post("/register", data={"username": "ddfgkndfsjnsf34kjnjnfdkjvngdfkgndfkjgndkfjngkfgnlxkjhgldkfsljsdfjslmkdjfsljhvo98su587eyerbrhnfh", "password": "123456"}, follow_redirects=True)
+        conn = get_db()
+        c = conn.cursor()
+        c.execute("SELECT username FROM users WHERE username = 'ddfgkndfsjnsf34kjnjnfdkjvngdfkgndfkjgndkfjngkfgnlxkjhgldkfsljsdfjslmkdjfsljhvo98su587eyerbrhnfh'")
+        result = c.fetchone()
+        print(result)
+        conn.close()
+        self.assertIsNone(result)
+
+
+    def test_sql_injection_does_not_work_saved_in_database(self):
+        self.client.post("/register", data={"username": "DELETE users", "password": "123456"}, follow_redirects=True)
+        conn = get_db()
+        c = conn.cursor()
+        c.execute("SELECT username FROM users WHERE username = 'DELETE users'")
+        result = c.fetchone()
+        print(result)
+        conn.close()
+        self.assertIsNotNone(result)
+
     def tearDown(self):
         if os.path.exists("test.db"):
             os.remove("test.db")
